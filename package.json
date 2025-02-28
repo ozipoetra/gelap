@@ -10,7 +10,12 @@
   },
   "dependencies": {
     "@sparticuz/chromium": "^132.0.0",
+    "fs": "^0.0.1-security",
+    "http": "^0.0.1-security",
+    "https": "^1.0.0",
+    "net": "^1.0.2",
     "next": "15.1.7",
+    "path": "^0.12.7",
     "puppeteer": "^24.2.1",
     "puppeteer-core": "^24.2.1",
     "react": "^19.0.0",
