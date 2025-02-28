@@ -10,7 +10,7 @@ import chromium from '@sparticuz/chromium';
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 /* eslint-disable  @typescript-eslint/no-unused-vars */
 
-
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
