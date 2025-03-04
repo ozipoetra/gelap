@@ -10,7 +10,7 @@ import chromium from '@sparticuz/chromium';
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 /* eslint-disable  @typescript-eslint/no-unused-vars */
 
-export const runtime = 'edge';
+
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
@@ -35,7 +35,7 @@ export async function GET(request) {
       executablePath,
       args: chromium.args,
       headless: chromium.headless,
-      //defaultViewport: chromium.defaultViewport,
+      defaultViewport: chromium.defaultViewport,
       ignoreHTTPSErrors: true
     });
 
@@ -43,11 +43,15 @@ export async function GET(request) {
     await page.setExtraHTTPHeaders({
       'Referer': ref
     });
-    await page.setViewport({
-      width: 720,
-      height: 1280,
-      deviceScaleFactor: 2,
-      isMobile: true
+    await page.setRequestInterception(true);
+
+    page.on('request', (req) => {
+      if (req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.resourceType() == 'image') {
+        req.abort();
+      }
+      else {
+        req.continue();
+      }
     });
     await page.goto(urlToVisit, {
       waitUntil: 'networkidle0'
@@ -79,19 +83,22 @@ export async function GET(request) {
     })
     //const video = await page.$eval("video", n => n.getAttribute("src"))
     */
+    /*
     const ss = await page.screenshot({
       path: '/tmp/ss.png',
+      fullPage: true
     });
+    */
+    const content = await page.content()
 
     await browser.close();
 
-    return new NextResponse(ss, {
+    return new NextResponse(content, {
       status: 200,
-      /*
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            */
+      headers: {
+        'Content-Type': 'text/html'
+      },
+
     });
   } catch (error) {
     console.error('Generation error:', error);
