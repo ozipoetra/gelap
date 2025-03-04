@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import puppeteerCore from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
