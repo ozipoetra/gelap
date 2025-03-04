@@ -13,6 +13,11 @@ import chromium from '@sparticuz/chromium';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
+const OPTIMAL_VIEWPORT = {
+  width: 1,
+  height: 1,
+  deviceScaleFactor: 0,
+};
 
 export async function GET(request) {
   const {
@@ -33,9 +38,15 @@ export async function GET(request) {
     const executablePath = await chromium.executablePath()
     const browser = await puppeteerCore.launch({
       executablePath,
-      args: chromium.args,
+      args: [
+        ...chromium.args,
+        '--disable-gpu',
+        '--no-zygote',
+        '--single-process',
+        '--disable-dev-shm-usage',
+      ],
       headless: chromium.headless,
-      defaultViewport: chromium.defaultViewport,
+      defaultViewport: OPTIMAL_VIEWPORT,
       ignoreHTTPSErrors: true
     });
 
@@ -44,14 +55,11 @@ export async function GET(request) {
       'Referer': ref
     });
     await page.setRequestInterception(true);
-
     page.on('request', (req) => {
-      if (req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.resourceType() == 'image') {
-        req.abort();
-      }
-      else {
-        req.continue();
-      }
+      const allowedResources = ['document', 'script', 'xhr', 'fetch'];
+      allowedResources.includes(req.resourceType()) 
+        ? req.continue() 
+        : req.abort();
     });
     await page.goto(urlToVisit, {
       waitUntil: 'networkidle0'
