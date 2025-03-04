@@ -64,9 +64,11 @@ export async function GET(request) {
     });
 
     await page.goto(urlToVisit, {
-      waitUntil: 'networkidle2',
+      waitUntil: 'domcontentloaded',
       timeout: 25000,
     });
+    
+    await page.waitForSelector('div#animeDownloadLink > a', { timeout: 25000 });
 
     const content = await page.content();
     
