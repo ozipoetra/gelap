@@ -4,25 +4,22 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 127.0.0.1",
-    "build": "npm install && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@sparticuz/chromium": "^132.0.0",
     "next": "15.1.7",
-    "puppeteer": "^24.2.1",
     "puppeteer-core": "^24.2.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "swiper": "^11.2.4"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "daisyui": "^5.0.0-beta.8",
     "eslint": "^9",
     "eslint-config-next": "15.1.7",
     "tailwindcss": "^4.0.8",
