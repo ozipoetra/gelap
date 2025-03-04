@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import puppeteerCore from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 
-export const runtime = 'edge';
-// export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 const OPTIMAL_VIEWPORT = {
@@ -22,6 +21,7 @@ const BROWSER_ARGS = [
   '--disable-setuid-sandbox',
   '--disable-fonts',
   '--disable-images',
+  '--disk-cache-size=104857600', // 100MB cache size
 ];
 
 export async function GET(request) {
@@ -42,6 +42,7 @@ export async function GET(request) {
     browser = await puppeteerCore.launch({
       executablePath,
       args: BROWSER_ARGS,
+      userDataDir: '/tmp/chrome-pupet',
       headless: chromium.headless,
       defaultViewport: OPTIMAL_VIEWPORT,
       ignoreHTTPSErrors: true,
@@ -49,19 +50,19 @@ export async function GET(request) {
 
     const page = await browser.newPage();
     
-    // Configure page settings
     await page.setExtraHTTPHeaders({ 'Referer': ref });
     await page.setRequestInterception(true);
-    //page.setDefaultNavigationTimeout(30000);
-    //page.setDefaultTimeout(15000);
 
-    // Optimize resource loading
     page.on('request', (req) => {
       const allowedResources = ['document', 'script', 'xhr', 'fetch'];
-      allowedResources.includes(req.resourceType()) ? req.continue() : req.abort();
+      if (allowedResources.includes(req.resourceType())) {
+        // Continue requests without modification to allow caching
+        req.continue();
+      } else {
+        req.abort();
+      }
     });
 
-    // Navigate with optimized waiting strategy
     await page.goto(urlToVisit, {
       waitUntil: 'networkidle2',
       timeout: 25000,
