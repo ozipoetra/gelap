@@ -1,122 +1,84 @@
-import {
-  NextResponse
-} from "next/server";
-//import puppeteer from 'puppeteer';
+import { NextResponse } from "next/server";
 import puppeteerCore from 'puppeteer-core';
-//import chromium from '@sparticuz/chromium-min';
 import chromium from '@sparticuz/chromium';
-// const chromium = require("@sparticuz/chromium");
-
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-/* eslint-disable  @typescript-eslint/no-unused-vars */
-
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
+
 const OPTIMAL_VIEWPORT = {
   width: 1,
   height: 1,
   deviceScaleFactor: 0,
 };
 
+const BROWSER_ARGS = [
+  ...chromium.args,
+  '--disable-gpu',
+  '--no-zygote',
+  '--single-process',
+  '--disable-dev-shm-usage',
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-fonts',
+  '--disable-images',
+];
+
 export async function GET(request) {
-  const {
-    searchParams
-  } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
   const urlToVisit = searchParams.get('url');
   const ref = searchParams.get('ref') || "https://www.google.com";
 
   if (!urlToVisit) {
-    return NextResponse.json({
-      message: 'Missing URL parameter'
-    }, {
-      status: 400
-    });
+    return NextResponse.json(
+      { message: 'Missing URL parameter' },
+      { status: 400 }
+    );
   }
 
+  let browser;
   try {
-    const executablePath = await chromium.executablePath()
-    const browser = await puppeteerCore.launch({
+    const executablePath = await chromium.executablePath();
+    browser = await puppeteerCore.launch({
       executablePath,
-      args: [
-        ...chromium.args,
-        '--disable-gpu',
-        '--no-zygote',
-        '--single-process',
-        '--disable-dev-shm-usage',
-      ],
+      args: BROWSER_ARGS,
       headless: chromium.headless,
       defaultViewport: OPTIMAL_VIEWPORT,
-      ignoreHTTPSErrors: true
+      ignoreHTTPSErrors: true,
     });
 
     const page = await browser.newPage();
-    await page.setExtraHTTPHeaders({
-      'Referer': ref
-    });
+    
+    // Configure page settings
+    await page.setExtraHTTPHeaders({ 'Referer': ref });
     await page.setRequestInterception(true);
+    //page.setDefaultNavigationTimeout(30000);
+    //page.setDefaultTimeout(15000);
+
+    // Optimize resource loading
     page.on('request', (req) => {
       const allowedResources = ['document', 'script', 'xhr', 'fetch'];
-      allowedResources.includes(req.resourceType()) 
-        ? req.continue() 
-        : req.abort();
+      allowedResources.includes(req.resourceType()) ? req.continue() : req.abort();
     });
+
+    // Navigate with optimized waiting strategy
     await page.goto(urlToVisit, {
-      waitUntil: 'networkidle0'
+      waitUntil: 'networkidle2',
+      timeout: 25000,
     });
 
-    /*
-        const pdf = await page.pdf({
-            format: 'A4',
-            printBackground: true,
-            margin: {
-                top: '20px',
-                right: '10px',
-                bottom: '10px',
-                left: '20px'
-            }
-        });
-        */
-
-    //await page.waitForSelector('video')
-
-    // Extract the video source URL
-    /*
-    const videoSrc = await page.evaluate(() => {
-      const video = document.querySelector('video')
-      if (!video) {
-        throw new Error('Video element not found')
-      }
-      return video.src
-    })
-    //const video = await page.$eval("video", n => n.getAttribute("src"))
-    */
-    /*
-    const ss = await page.screenshot({
-      path: '/tmp/ss.png',
-      fullPage: true
-    });
-    */
-    const content = await page.content()
-
-    await browser.close();
-
+    const content = await page.content();
+    
     return new NextResponse(content, {
       status: 200,
-      headers: {
-        'Content-Type': 'text/html'
-      },
-
+      headers: { 'Content-Type': 'text/html' },
     });
   } catch (error) {
     console.error('Generation error:', error);
     return NextResponse.json(
-      {
-        message: 'Error generating'
-      },
-      {
-        status: 500
-      }
+      { message: 'Error generating content' },
+      { status: 500 }
     );
+  } finally {
+    if (browser) await browser.close();
   }
 }
