@@ -3,7 +3,7 @@ import puppeteerCore from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 
 export const runtime = 'edge';
-export const dynamic = 'force-dynamic';
+// export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 const OPTIMAL_VIEWPORT = {
